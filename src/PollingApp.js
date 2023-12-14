@@ -3,24 +3,34 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { voteAction } from './redux/actions';
 
-const PollingApp = ({ options, vote }) => {
+const PollingApp = ({ options, vote, storedVotes }) => {
   useEffect(() => {
-    // Отримати голоси з localStorage та оновити їх у Redux
-    const storedVotes = JSON.parse(localStorage.getItem('pollVotes'));
-    if (storedVotes) {
-      storedVotes.forEach((optionId) => {
-        vote(optionId);
+    const storedOptions = JSON.parse(localStorage.getItem('pollOptions'));
+    if (storedOptions) {
+      storedOptions.forEach((storedOption) => {
+        const matchingOption = options.find((option) => option.id === storedOption.id);
+        if (matchingOption) {
+          vote(storedOption.id, storedOption.votes);
+        }
       });
     }
-  }, []); // Запустити ефект один раз після завантаження компонента
+  }, []);
 
   const handleVote = (optionId) => {
     vote(optionId);
 
-    // Зберегти голос в localStorage
-    const storedVotes = JSON.parse(localStorage.getItem('pollVotes')) || [];
-    storedVotes.push(optionId);
-    localStorage.setItem('pollVotes', JSON.stringify(storedVotes));
+    const storedOptions = JSON.parse(localStorage.getItem('pollOptions')) || [];
+    const updatedOptions = storedOptions.map((storedOption) => {
+      if (storedOption.id === optionId) {
+        return { ...storedOption, votes: storedOption.votes + 1 };
+      }
+      return storedOption;
+    });
+    const matchingOption = options.find((option) => option.id === optionId);
+    if (matchingOption) {
+      updatedOptions.push({ id: optionId, votes: matchingOption.votes + 1 });
+    }
+    localStorage.setItem('pollOptions', JSON.stringify(updatedOptions));
   };
 
   return (
@@ -43,7 +53,7 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  vote: (optionId) => dispatch(voteAction(optionId)),
+  vote: (optionId, votes) => dispatch(voteAction(optionId, votes)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PollingApp);

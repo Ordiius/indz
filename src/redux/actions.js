@@ -1,5 +1,5 @@
 // actions.js
-export const voteAction = (optionId) => ({
+export const voteAction = (option) => ({
   type: 'VOTE',
-  payload: optionId,
+  payload: option,
 });
